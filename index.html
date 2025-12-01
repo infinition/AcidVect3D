@@ -286,9 +286,11 @@
 
             <!-- Upload Area -->
             <div id="drop-zone"
-                class="border border-dashed border-zinc-600 bg-zinc-900/50 rounded p-6 text-center transition-all cursor-pointer group relative hover:border-lime-500/50 hover:bg-zinc-800/80">
+                class="relative border border-dashed border-zinc-600 bg-zinc-900/50 rounded p-6 text-center transition-all cursor-pointer group hover:border-lime-500/50 hover:bg-zinc-800/80">
+
                 <input type="file" id="file-input" accept=".svg"
-                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    class="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer pointer-events-auto" />
+
                 <div
                     class="text-lime-500 text-3xl mb-2 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_5px_rgba(132,204,22,0.5)]">
                     <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,9 +298,12 @@
                             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                     </svg>
                 </div>
-                <p class="text-xs text-zinc-400 font-bold tracking-widest uppercase group-hover:text-white">IMPORT SVG
+
+                <p class="text-xs text-zinc-400 font-bold tracking-widest uppercase group-hover:text-white">
+                    IMPORT SVG
                 </p>
             </div>
+
 
             <!-- Global Settings -->
             <div class="space-y-4">
