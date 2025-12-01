@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AcidVect3D - Acid Burn Edition</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Three.js & Dependencies -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&display=swap');
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: #09090b;
+            /* zinc-950 */
+            color: #e4e4e7;
+            /* zinc-200 */
+            overflow: hidden;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- ACID BURN THEME UTILS --- */
+        .acid-glow {
+            box-shadow: 0 0 10px rgba(132, 204, 22, 0.3);
+            /* lime-500 glow */
+        }
+
+        .acid-border {
+            border-color: rgba(132, 204, 22, 0.5);
+        }
+
+        .acid-text {
+            color: #bef264;
+            /* lime-300 */
+            text-shadow: 0 0 5px rgba(132, 204, 22, 0.5);
+        }
+
+        /* Glass Panel Styling */
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.95);
+            /* zinc-900 */
+            backdrop-filter: blur(16px);
+            border-right: 1px solid rgba(63, 63, 70, 0.5);
+            /* zinc-700 */
+            transition: opacity 0.2s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Transparency Mode on Slide */
+        .glass-panel.interaction-fade {
+            opacity: 0.15;
+            backdrop-filter: none;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #18181b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #3f3f46;
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #52525b;
+        }
+
+        /* Range Slider Styling */
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            border-radius: 2px;
+            background: #27272a;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 0;
+            /* Square/Tech look */
+            background: #84cc16;
+            /* lime-500 */
+            border: 2px solid #09090b;
+            cursor: pointer;
+            transition: transform 0.1s;
+            box-shadow: 0 0 8px rgba(132, 204, 22, 0.6);
+        }
+
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #a3e635;
+            /* lime-400 */
+        }
+
+        /* Checkbox Styling */
+        .tech-checkbox {
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #27272a;
+            border: 1px solid #52525b;
+            border-radius: 2px;
+            cursor: pointer;
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tech-checkbox:checked {
+            background: #84cc16;
+            border-color: #84cc16;
+        }
+
+        .tech-checkbox:checked::after {
+            content: '✓';
+            color: #09090b;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        /* Loader */
+        .loader {
+            border: 3px solid #27272a;
+            border-top: 3px solid #84cc16;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 0.8s linear infinite;
+            box-shadow: 0 0 15px rgba(132, 204, 22, 0.2);
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        #drop-zone.dragover {
+            border-color: #84cc16;
+            background-color: rgba(132, 204, 22, 0.1);
+            box-shadow: inset 0 0 20px rgba(132, 204, 22, 0.2);
+        }
+
+        .layer-item {
+            transition: all 0.2s;
+            border-left: 2px solid transparent;
+        }
+
+        .layer-item:hover {
+            background-color: rgba(63, 63, 70, 0.4);
+            border-left-color: #84cc16;
+        }
+
+        .btn-toggle.active {
+            background-color: #365314;
+            /* lime-950 */
+            color: #bef264;
+            border-color: #65a30d;
+            box-shadow: inset 0 0 10px rgba(132, 204, 22, 0.2);
+        }
+
+        /* Tech Grid Background for Empty State */
+        .tech-bg {
+            background-image: linear-gradient(rgba(39, 39, 42, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(39, 39, 42, 0.3) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .bevel-icon.active {
+            color: #bef264;
+            /* lime-300 */
+            filter: drop-shadow(0 0 2px rgba(132, 204, 22, 0.5));
+        }
+
+        .bevel-icon {
+            color: #52525b;
+            /* zinc-600 */
+        }
+    </style>
+</head>
+
+<body class="h-screen w-screen overflow-hidden bg-zinc-950 text-zinc-300">
+
+    <!-- Mobile Menu Button (FAB) -->
+    <button id="mobile-menu-btn"
+        class="md:hidden fixed bottom-6 right-6 z-50 w-14 h-14 bg-lime-600 text-black rounded-full shadow-[0_0_20px_rgba(132,204,22,0.4)] flex items-center justify-center active:scale-95 transition-transform border-2 border-lime-400">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+            </path>
+        </svg>
+    </button>
+
+    <!-- Sidebar / Controls (Drawer on Mobile) -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 w-80 md:w-96 glass-panel z-40 flex flex-col transform -translate-x-full md:translate-x-0 shadow-2xl h-full">
+
+        <!-- Header -->
+        <div class="p-5 border-b border-zinc-800 flex flex-col gap-4 bg-zinc-900/50">
+            <div class="flex items-center justify-between">
+                <h1 class="text-2xl font-bold tracking-widest text-white flex items-center gap-2">
+                    <span class="w-3 h-3 bg-lime-500 rounded-sm shadow-[0_0_8px_#84cc16]"></span>
+                    ACID<span class="text-lime-400 font-light">VECT3D</span>
+                </h1>
+                <span class="text-[10px] font-mono text-zinc-500 border border-zinc-700 px-1 rounded">v3.0 FINAL</span>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="flex items-center justify-between gap-2 bg-black/40 p-2 rounded border border-zinc-800">
+                <div class="flex gap-1">
+                    <button id="btn-flip-h" class="btn-toggle p-2 rounded hover:bg-zinc-800 text-zinc-400 transition"
+                        title="Flip H">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                    </button>
+                    <button id="btn-flip-v" class="btn-toggle p-2 rounded hover:bg-zinc-800 text-zinc-400 transition"
+                        title="Flip V">
+                        <svg class="w-4 h-4 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="w-px h-5 bg-zinc-700"></div>
+
+                <!-- Rotation -->
+                <div class="flex gap-1 font-mono text-xs font-bold">
+                    <button onclick="window.rotateModel('x')"
+                        class="px-2 py-1 hover:bg-zinc-800 text-zinc-400 rounded transition">X</button>
+                    <button onclick="window.rotateModel('y')"
+                        class="px-2 py-1 hover:bg-zinc-800 text-zinc-400 rounded transition">Y</button>
+                    <button onclick="window.rotateModel('z')"
+                        class="px-2 py-1 hover:bg-zinc-800 text-zinc-400 rounded transition">Z</button>
+                </div>
+
+                <div class="w-px h-5 bg-zinc-700"></div>
+
+                <!-- Light Boost Button (Default Active) -->
+                <button id="btn-light-boost"
+                    class="btn-toggle active p-2 rounded hover:bg-zinc-800 text-zinc-400 transition"
+                    title="Light Boost">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Scrollable Controls -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-8">
+
+            <!-- Upload Area -->
+            <div id="drop-zone"
+                class="border border-dashed border-zinc-600 bg-zinc-900/50 rounded p-6 text-center transition-all cursor-pointer group relative hover:border-lime-500/50 hover:bg-zinc-800/80">
+                <input type="file" id="file-input" accept=".svg"
+                    class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <div
+                    class="text-lime-500 text-3xl mb-2 group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_5px_rgba(132,204,22,0.5)]">
+                    <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                    </svg>
+                </div>
+                <p class="text-xs text-zinc-400 font-bold tracking-widest uppercase group-hover:text-white">IMPORT SVG
+                </p>
+            </div>
+
+            <!-- Global Settings -->
+            <div class="space-y-4">
+                <h3
+                    class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold border-b border-zinc-800 pb-1">
+                    Global Settings</h3>
+
+                <!-- Sliders Grid -->
+                <div class="space-y-4">
+                    <!-- Scale -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-xs text-zinc-400 font-medium">SCALE</label>
+                            <span id="val-scale" class="text-xs font-mono text-lime-400">1.0</span>
+                        </div>
+                        <input type="range" id="param-scale" min="0.1" max="5" step="0.1" value="1.0"
+                            class="range-slider">
+                    </div>
+
+                    <!-- Spacing -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-xs text-zinc-400 font-medium">Z SPACING</label>
+                            <span id="val-spacing" class="text-xs font-mono text-lime-400">0</span>
+                        </div>
+                        <input type="range" id="param-spacing" min="0" max="100" step="1" value="0"
+                            class="range-slider">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bevel Settings -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-1 cursor-pointer"
+                    onclick="document.getElementById('bevel-settings').classList.toggle('hidden')">
+                    <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold flex items-center gap-1">
+                        Bevel Profile (Optional)
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </h3>
+                </div>
+
+                <div id="bevel-settings" class="space-y-4 hidden">
+                    <!-- Bevel Thickness -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-xs text-zinc-400 font-medium">DEPTH / THICKNESS</label>
+                            <span id="val-bevel" class="text-xs font-mono text-lime-400">0</span>
+                        </div>
+                        <input type="range" id="param-bevel" min="0" max="5" step="0.05" value="0" class="range-slider">
+                    </div>
+
+                    <!-- Bevel Segments (Profile) -->
+                    <div>
+                        <div class="flex justify-between mb-2">
+                            <label class="text-xs text-zinc-400 font-medium">SMOOTHNESS (SEGMENTS)</label>
+                            <span id="val-segments" class="text-xs font-mono text-lime-400">1</span>
+                        </div>
+                        <input type="range" id="param-segments" min="1" max="10" step="1" value="1"
+                            class="range-slider">
+                        <div class="flex justify-between text-[8px] text-zinc-600 mt-1 font-mono">
+                            <span>Chamfer</span>
+                            <span>Rounded</span>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Bevel Toggle -->
+                    <div class="flex items-center justify-between pt-2 border-t border-zinc-800/50">
+                        <div class="flex flex-col">
+                            <span class="text-xs text-zinc-300 font-medium">BOTTOM BEVEL</span>
+                            <span class="text-[8px] text-zinc-500">Enable for double-sided</span>
+                        </div>
+                        <input type="checkbox" id="param-bottom-bevel" class="tech-checkbox">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Layers List -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center border-b border-zinc-800 pb-1">
+                    <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-bold">Layers</h3>
+                    <span id="layer-count"
+                        class="text-[9px] font-mono bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded">0</span>
+                </div>
+
+                <div id="layers-container" class="space-y-2 min-h-[100px]">
+                    <div
+                        class="text-xs text-zinc-600 italic text-center py-8 border border-zinc-800/50 rounded bg-zinc-900/30">
+                        Waiting for file...
+                    </div>
+                </div>
+            </div>
+
+            <div class="h-10 md:hidden"></div> <!-- Spacer for mobile -->
+        </div>
+
+        <!-- Footer -->
+        <div class="p-5 border-t border-zinc-800 bg-zinc-950">
+            <!-- Stats -->
+            <div class="flex items-center justify-between mb-4 text-[10px] text-zinc-500 font-mono">
+                <div class="flex gap-3">
+                    <span>VERTS: <span id="stat-verts" class="text-zinc-300">0</span></span>
+                    <span>TRIS: <span id="stat-tris" class="text-zinc-300">0</span></span>
+                </div>
+                <label class="flex items-center cursor-pointer hover:text-white transition gap-2">
+                    <input type="checkbox" id="param-wireframe" class="tech-checkbox">
+                    <span class="text-[10px]">WIRE</span>
+                </label>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-export-combined" disabled
+                    class="group disabled:opacity-50 disabled:cursor-not-allowed w-full py-3 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-bold rounded-sm border border-zinc-700 transition flex flex-col items-center justify-center gap-1">
+                    <span class="text-xs tracking-wider">MERGED STL</span>
+                    <span class="text-[8px] text-zinc-500 group-hover:text-zinc-400 font-mono uppercase">Single
+                        File</span>
+                </button>
+
+                <button id="btn-export-separate" disabled
+                    class="group disabled:opacity-50 disabled:cursor-not-allowed w-full py-3 bg-lime-900/30 hover:bg-lime-900/50 text-lime-400 hover:text-lime-300 font-bold rounded-sm border border-lime-900/50 hover:border-lime-500/50 transition flex flex-col items-center justify-center gap-1 shadow-[0_0_10px_rgba(132,204,22,0.1)]">
+                    <span class="text-xs tracking-wider">SPLIT STL</span>
+                    <span class="text-[8px] text-lime-700 group-hover:text-lime-500 font-mono uppercase">Multi
+                        Files</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Overlay Close Area (Mobile Only) - No Blur/Bg color as requested -->
+    <div id="mobile-overlay"
+        class="md:hidden fixed inset-0 z-30 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <!-- Main 3D Canvas -->
+    <main class="fixed inset-0 z-0 bg-zinc-950 tech-bg">
+        <div id="canvas-container" class="w-full h-full cursor-move outline-none touch-none"></div>
+
+        <!-- Loading -->
+        <div id="loading-overlay"
+            class="absolute inset-0 bg-zinc-950/80 flex flex-col items-center justify-center z-50 hidden backdrop-blur-sm">
+            <div class="loader mb-4"></div>
+            <p class="text-lime-500 font-bold tracking-[0.3em] text-xs animate-pulse">PROCESSING...</p>
+        </div>
+
+        <!-- Empty State (Centered) -->
+        <div id="empty-state" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="text-center opacity-20">
+                <h2 class="text-6xl md:text-8xl font-bold text-zinc-500 mb-2 tracking-tighter">VIEWER</h2>
+                <p class="text-zinc-400 font-mono text-sm md:text-base">DRAG A VECTOR FILE</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- App Logic -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+        import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+
+        // --- UI & State Management ---
+        const ui = {
+            sidebar: document.getElementById('sidebar'),
+            mobileOverlay: document.getElementById('mobile-overlay'),
+            mobileMenuBtn: document.getElementById('mobile-menu-btn'),
+            container: document.getElementById('canvas-container'),
+            fileInput: document.getElementById('file-input'),
+            dropZone: document.getElementById('drop-zone'),
+            loading: document.getElementById('loading-overlay'),
+            emptyState: document.getElementById('empty-state'),
+            btnExportCombined: document.getElementById('btn-export-combined'),
+            btnExportSeparate: document.getElementById('btn-export-separate'),
+            layersList: document.getElementById('layers-container'),
+            layerCount: document.getElementById('layer-count'),
+            statVerts: document.getElementById('stat-verts'),
+            statTris: document.getElementById('stat-tris'),
+            btnFlipH: document.getElementById('btn-flip-h'),
+            btnFlipV: document.getElementById('btn-flip-v'),
+            btnLightBoost: document.getElementById('btn-light-boost'),
+            inputs: {
+                bevel: document.getElementById('param-bevel'),
+                segments: document.getElementById('param-segments'),
+                bottomBevel: document.getElementById('param-bottom-bevel'),
+                scale: document.getElementById('param-scale'),
+                spacing: document.getElementById('param-spacing'),
+                wireframe: document.getElementById('param-wireframe'),
+            },
+            labels: {
+                bevel: document.getElementById('val-bevel'),
+                segments: document.getElementById('val-segments'),
+                scale: document.getElementById('val-scale'),
+                spacing: document.getElementById('val-spacing')
+            }
+        };
+
+        const state = {
+            scale: 1,
+            bevelThickness: 0,
+            bevelSegments: 1,
+            bottomBevel: false,
+            spacing: 0,
+            wireframe: false,
+            svgData: null,
+            flipH: false,
+            flipV: false,
+            layers: {},
+            modelGroup: new THREE.Group(),
+            isMobileMenuOpen: false,
+            highLightMode: true // Default True
+        };
+
+        // --- Interaction Logic (Fade Sidebar) ---
+        function setupInteractionFade() {
+            const sliders = document.querySelectorAll('input[type="range"]');
+            const startFade = () => ui.sidebar.classList.add('interaction-fade');
+            const endFade = () => ui.sidebar.classList.remove('interaction-fade');
+
+            sliders.forEach(slider => {
+                slider.addEventListener('pointerdown', startFade);
+                window.addEventListener('pointerup', endFade);
+                window.addEventListener('pointercancel', endFade);
+            });
+        }
+        setupInteractionFade();
+
+        // --- Mobile Menu Logic ---
+        function toggleMobileMenu(forceState) {
+            const isOpen = forceState !== undefined ? forceState : !state.isMobileMenuOpen;
+            state.isMobileMenuOpen = isOpen;
+
+            if (isOpen) {
+                ui.sidebar.classList.remove('-translate-x-full');
+                ui.mobileOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                ui.sidebar.classList.add('-translate-x-full');
+                ui.mobileOverlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        ui.mobileMenuBtn.addEventListener('click', () => toggleMobileMenu());
+        ui.mobileOverlay.addEventListener('click', () => toggleMobileMenu(false));
+
+        // --- Three.js Setup ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x09090b);
+        scene.fog = new THREE.FogExp2(0x09090b, 0.002);
+
+        const gridHelper = new THREE.GridHelper(200, 40, 0x3f3f46, 0x18181b);
+        scene.add(gridHelper);
+
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 2000);
+        camera.position.set(0, 120, 140);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        ui.container.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxPolarAngle = Math.PI / 2 - 0.05;
+
+        // --- Lighting ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(ambientLight);
+
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x111111, 1.0);
+        hemiLight.position.set(0, 200, 0);
+        scene.add(hemiLight);
+
+        const underGlow = new THREE.PointLight(0x84cc16, 0.8, 100);
+        underGlow.position.set(0, -40, 0);
+        scene.add(underGlow);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 2.0);
+        dirLight.position.set(50, 200, 100);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        scene.add(dirLight);
+
+        const fillLight = new THREE.DirectionalLight(0xa1a1aa, 0.4);
+        fillLight.position.set(-50, 50, -50);
+        scene.add(fillLight);
+
+        scene.add(state.modelGroup);
+
+        // --- Light Logic ---
+        function updateLighting() {
+            if (state.highLightMode) {
+                // Boosted Mode
+                ambientLight.intensity = 1.5;
+                dirLight.intensity = 3.5;
+                fillLight.intensity = 2.0;
+
+                if (!scene.getObjectByName('extraFill')) {
+                    const extraFill = new THREE.DirectionalLight(0xffffff, 1.5);
+                    extraFill.name = 'extraFill';
+                    extraFill.position.set(0, 50, 100);
+                    scene.add(extraFill);
+                }
+            } else {
+                // Acid Dark Mode
+                ambientLight.intensity = 0.2;
+                dirLight.intensity = 2.0;
+                fillLight.intensity = 0.4;
+                const extra = scene.getObjectByName('extraFill');
+                if (extra) scene.remove(extra);
+            }
+        }
+
+        // Initial Call
+        updateLighting();
+
+        ui.btnLightBoost.addEventListener('click', () => {
+            state.highLightMode = !state.highLightMode;
+            ui.btnLightBoost.classList.toggle('active');
+            updateLighting();
+        });
+
+
+        // --- UI Rendering ---
+        function renderLayersUI() {
+            ui.layersList.innerHTML = '';
+            const colors = Object.keys(state.layers);
+            ui.layerCount.innerText = colors.length;
+
+            if (colors.length === 0) {
+                ui.layersList.innerHTML = '<div class="text-xs text-zinc-600 italic text-center py-8">No layers</div>';
+                return;
+            }
+
+            colors.forEach((colorKey) => {
+                const layer = state.layers[colorKey];
+
+                const item = document.createElement('div');
+                item.className = 'layer-item flex items-center gap-3 p-2 rounded bg-zinc-900 border border-zinc-800';
+
+                // Color Swatch
+                const swatchWrapper = document.createElement('div');
+                swatchWrapper.className = 'flex flex-col items-center gap-1 min-w-[24px]';
+                const swatch = document.createElement('div');
+                swatch.className = 'w-5 h-5 rounded-sm border border-zinc-600 cursor-pointer shadow-sm';
+                swatch.style.backgroundColor = colorKey;
+                swatch.style.opacity = layer.visible ? '1' : '0.3';
+                swatch.onclick = () => {
+                    layer.visible = !layer.visible;
+                    swatch.style.opacity = layer.visible ? '1' : '0.3';
+                    swatch.style.boxShadow = layer.visible ? `0 0 8px ${colorKey}` : 'none';
+                    debouncedUpdate();
+                };
+                const hexLabel = document.createElement('span');
+                hexLabel.className = 'text-[8px] font-mono text-zinc-500 uppercase';
+                hexLabel.innerText = colorKey.substring(0, 7);
+                swatchWrapper.appendChild(swatch);
+                swatchWrapper.appendChild(hexLabel);
+
+                // Controls
+                const controlsWrapper = document.createElement('div');
+                controlsWrapper.className = 'flex-1';
+
+                const header = document.createElement('div');
+                header.className = 'flex justify-between mb-1 items-center';
+                const depthText = layer.depth === 0 ? '<span class="text-zinc-600">OFF</span>' : layer.depth;
+
+                // Per-Object Bevel Toggle
+                const bevelToggle = document.createElement('div');
+                bevelToggle.className = `cursor-pointer transition ${layer.bevelEnabled ? 'bevel-icon active' : 'bevel-icon'}`;
+                bevelToggle.title = "Toggle Bevel for this layer";
+                bevelToggle.innerHTML = `<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l10 10-10 10L2 12 12 2z"></path></svg>`;
+                bevelToggle.onclick = () => {
+                    layer.bevelEnabled = !layer.bevelEnabled;
+                    bevelToggle.className = `cursor-pointer transition ${layer.bevelEnabled ? 'bevel-icon active' : 'bevel-icon'}`;
+                    debouncedUpdate();
+                };
+
+                const labelGroup = document.createElement('div');
+                labelGroup.innerHTML = `<span class="text-[9px] text-zinc-400 font-bold uppercase tracking-wider mr-2">DEPTH</span>`;
+
+                const valDisplay = document.createElement('span');
+                valDisplay.className = 'text-[9px] font-mono text-lime-500 depth-val';
+                valDisplay.innerHTML = depthText;
+
+                header.appendChild(labelGroup);
+                // Spacer
+                header.insertAdjacentHTML('beforeend', '<div class="flex-1"></div>');
+                header.appendChild(bevelToggle);
+                header.insertAdjacentHTML('beforeend', '<div class="w-2"></div>');
+                header.appendChild(valDisplay);
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.min = '0';
+                slider.max = '100';
+                slider.value = layer.depth;
+                slider.className = 'range-slider';
+                slider.style.height = '2px';
+
+                slider.addEventListener('pointerdown', () => ui.sidebar.classList.add('interaction-fade'));
+                slider.oninput = (e) => {
+                    const val = parseInt(e.target.value);
+                    layer.depth = val;
+                    valDisplay.innerHTML = val === 0 ? '<span class="text-zinc-600">OFF</span>' : val;
+                    debouncedUpdate();
+                };
+
+                controlsWrapper.appendChild(header);
+                controlsWrapper.appendChild(slider);
+
+                item.appendChild(swatchWrapper);
+                item.appendChild(controlsWrapper);
+                ui.layersList.appendChild(item);
+            });
+        }
+
+        // --- Core 3D Logic ---
+        function updateGeometry() {
+            if (!state.svgData) return;
+            ui.loading.classList.remove('hidden');
+
+            setTimeout(() => {
+                state.modelGroup.position.set(0, 0, 0);
+                state.modelGroup.rotation.set(0, 0, 0);
+                state.modelGroup.scale.set(1, 1, 1);
+
+                while (state.modelGroup.children.length > 0) {
+                    const child = state.modelGroup.children[0];
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) child.material.dispose();
+                    state.modelGroup.remove(child);
+                }
+
+                let totalVerts = 0;
+                let totalTris = 0;
+
+                Object.keys(state.layers).forEach((colorKey, index) => {
+                    const layer = state.layers[colorKey];
+                    if (!layer.visible || layer.depth <= 0) return;
+
+                    const applyBevel = parseFloat(state.bevelThickness) > 0 && layer.bevelEnabled;
+
+                    const extrudeSettings = {
+                        steps: 1,
+                        depth: layer.depth,
+                        bevelEnabled: applyBevel,
+                        bevelThickness: applyBevel ? parseFloat(state.bevelThickness) : 0,
+                        bevelSize: applyBevel ? parseFloat(state.bevelThickness) * 0.5 : 0,
+                        bevelOffset: 0,
+                        bevelSegments: parseInt(state.bevelSegments)
+                    };
+
+                    const geometry = new THREE.ExtrudeGeometry(layer.shapes, extrudeSettings);
+
+                    // --- FLATTEN BOTTOM BEVEL LOGIC ---
+                    if (applyBevel && !state.bottomBevel) {
+                        const posAttribute = geometry.attributes.position;
+                        for (let i = 0; i < posAttribute.count; i++) {
+                            const z = posAttribute.getZ(i);
+                            if (z < 0) {
+                                posAttribute.setZ(i, 0);
+                            }
+                        }
+                        posAttribute.needsUpdate = true;
+                        geometry.computeVertexNormals();
+                    }
+                    // ----------------------------------
+
+                    const scaleX = state.scale * (state.flipH ? -1 : 1);
+                    const scaleY = -state.scale * (state.flipV ? -1 : 1);
+
+                    geometry.scale(scaleX, scaleY, state.scale);
+
+                    const material = new THREE.MeshStandardMaterial({
+                        color: new THREE.Color(layer.color),
+                        roughness: 0.2,
+                        metalness: 0.3,
+                        wireframe: state.wireframe,
+                        side: THREE.DoubleSide
+                    });
+
+                    const mesh = new THREE.Mesh(geometry, material);
+                    mesh.name = layer.color;
+                    mesh.castShadow = true;
+                    mesh.receiveShadow = true;
+
+                    mesh.position.z = index * state.spacing;
+
+                    state.modelGroup.add(mesh);
+
+                    totalVerts += geometry.attributes.position.count;
+                    totalTris += (geometry.index ? geometry.index.count : geometry.attributes.position.count) / 3;
+                });
+
+                if (state.modelGroup.children.length > 0) {
+                    const box = new THREE.Box3().setFromObject(state.modelGroup);
+                    const center = new THREE.Vector3();
+                    box.getCenter(center);
+
+                    state.modelGroup.children.forEach(mesh => {
+                        mesh.position.sub(center);
+                    });
+
+                    state.modelGroup.rotation.x = -Math.PI / 2;
+                    const sizeZ = box.max.z - box.min.z;
+                    state.modelGroup.position.y = sizeZ * state.scale / 2;
+                }
+
+                ui.statVerts.innerText = totalVerts;
+                ui.statTris.innerText = Math.floor(totalTris);
+
+                ui.loading.classList.add('hidden');
+                ui.emptyState.classList.add('hidden');
+
+                const hasModel = state.modelGroup.children.length > 0;
+                ui.btnExportCombined.disabled = !hasModel;
+                ui.btnExportSeparate.disabled = !hasModel;
+
+            }, 20);
+        }
+
+        let debounceTimer;
+        function debouncedUpdate() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(updateGeometry, 50);
+        }
+
+        // --- SVG Loading ---
+        function loadSVG(content) {
+            const loader = new SVGLoader();
+            try {
+                const data = loader.parse(content);
+                state.svgData = data;
+                state.layers = {};
+
+                let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                let hasShapes = false;
+
+                data.paths.forEach((path) => {
+                    const fillColor = path.userData.style.fill;
+                    let colorKey = "#000000";
+
+                    if (fillColor !== undefined && fillColor !== 'none') {
+                        const tempColor = new THREE.Color().setStyle(fillColor);
+                        colorKey = '#' + tempColor.getHexString();
+                    } else { return; }
+
+                    if (!state.layers[colorKey]) {
+                        state.layers[colorKey] = {
+                            color: colorKey,
+                            visible: true,
+                            bevelEnabled: true, // Default to true
+                            depth: 10,
+                            shapes: []
+                        };
+                    }
+
+                    const shapes = path.toShapes(true);
+
+                    shapes.forEach(shape => {
+                        hasShapes = true;
+                        const points = shape.getPoints();
+                        points.forEach(pt => {
+                            if (pt.x < minX) minX = pt.x;
+                            if (pt.x > maxX) maxX = pt.x;
+                            if (pt.y < minY) minY = pt.y;
+                            if (pt.y > maxY) maxY = pt.y;
+                        });
+                    });
+
+                    state.layers[colorKey].shapes.push(...shapes);
+                });
+
+                if (hasShapes) {
+                    const maxDim = Math.max(maxX - minX, maxY - minY);
+                    const targetDim = 160;
+                    if (maxDim > 0) {
+                        let newScale = Math.round((targetDim / maxDim) * 100) / 100;
+                        state.scale = newScale;
+                        ui.inputs.scale.value = newScale;
+                        ui.labels.scale.innerText = newScale;
+                        if (newScale > parseFloat(ui.inputs.scale.max)) ui.inputs.scale.max = Math.ceil(newScale * 1.5);
+                    }
+                }
+
+                renderLayersUI();
+                updateGeometry();
+                controls.reset();
+                camera.position.set(0, 150, 150);
+                camera.lookAt(0, 0, 0);
+                if (window.innerWidth < 768) toggleMobileMenu(false);
+
+            } catch (e) {
+                alert("SVG Error: " + e.message);
+                console.error(e);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => loadSVG(e.target.result);
+            reader.readAsText(file);
+        }
+
+        // --- Exports ---
+        async function exportSTL(separateFiles = false) {
+            if (state.modelGroup.children.length === 0) return;
+            const exporter = new STLExporter();
+
+            if (separateFiles) {
+                const meshes = [...state.modelGroup.children];
+                for (let i = 0; i < meshes.length; i++) {
+                    const mesh = meshes[i];
+                    const safeName = mesh.name.replace('#', '');
+
+                    meshes.forEach(m => m.visible = false);
+                    mesh.visible = true;
+
+                    const result = exporter.parse(state.modelGroup, { binary: true });
+                    downloadBlob(result, `acidvect3d_${safeName}.stl`);
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                meshes.forEach(m => m.visible = true);
+            } else {
+                const result = exporter.parse(state.modelGroup, { binary: true });
+                downloadBlob(result, 'acidvect3d_full.stl');
+            }
+        }
+
+        function downloadBlob(data, filename) {
+            const blob = new Blob([data], { type: 'application/octet-stream' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+        }
+
+        // --- Event Listeners & Global ---
+        window.rotateModel = (axis) => {
+            const angle = Math.PI / 2;
+            if (axis === 'x') state.modelGroup.rotateX(angle);
+            if (axis === 'y') state.modelGroup.rotateY(angle);
+            if (axis === 'z') state.modelGroup.rotateZ(angle);
+        };
+
+        ui.fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        ui.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); ui.dropZone.classList.add('dragover'); });
+        ui.dropZone.addEventListener('dragleave', () => ui.dropZone.classList.remove('dragover'));
+        ui.dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            ui.dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        });
+
+        const updateParam = (key, val, el) => {
+            state[key] = val;
+            if (ui.labels[key]) ui.labels[key].innerText = val;
+            debouncedUpdate();
+        };
+
+        ui.inputs.bevel.addEventListener('input', (e) => updateParam('bevelThickness', e.target.value));
+        ui.inputs.segments.addEventListener('input', (e) => updateParam('bevelSegments', e.target.value));
+        ui.inputs.scale.addEventListener('input', (e) => updateParam('scale', e.target.value));
+        ui.inputs.spacing.addEventListener('input', (e) => updateParam('spacing', e.target.value));
+
+        // Handle checkbox boolean
+        ui.inputs.bottomBevel.addEventListener('change', (e) => {
+            state.bottomBevel = e.target.checked;
+            debouncedUpdate();
+        });
+
+        ui.inputs.wireframe.addEventListener('change', (e) => {
+            state.wireframe = e.target.checked;
+            updateGeometry();
+        });
+
+        ui.btnFlipH.addEventListener('click', () => {
+            state.flipH = !state.flipH;
+            ui.btnFlipH.classList.toggle('active');
+            updateGeometry();
+        });
+        ui.btnFlipV.addEventListener('click', () => {
+            state.flipV = !state.flipV;
+            ui.btnFlipV.classList.toggle('active');
+            updateGeometry();
+        });
+
+        ui.btnExportCombined.addEventListener('click', () => exportSTL(false));
+        ui.btnExportSeparate.addEventListener('click', () => exportSTL(true));
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+    </script>
+</body>
+
+</html>
