@@ -1,4 +1,6 @@
-<img width="334" height="334" alt="image-removebg-preview (14)" src="https://github.com/user-attachments/assets/df0c23dc-9236-4d98-a9bd-92d60aec6aef" />
+<p align="center">
+  <img src=".github/AcidVect3D.png" alt="AcidVect3D icon" width="334" height="334" />
+</p>
 
 
 # AcidVect3D
